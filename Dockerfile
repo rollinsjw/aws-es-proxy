@@ -5,12 +5,17 @@ COPY . .
 
 RUN apk add --update bash curl git && \
     rm /var/cache/apk/*
+RUN apk add --update make
+RUN apk --no-cache --no-progress add --virtual build-deps build-base linux-pam-dev
+RUN git clone https://github.com/Masterminds/glide ${GOPATH}/src/github.com/Masterminds/glide && \
+    cd ${GOPATH}/src/github.com/Masterminds/glide && \
+    make build && \
+    go install
+RUN apk add --no-cache su-exec
+RUN  cd /go/src/github.com/abutaha/aws-es-proxy && \
+     glide install 
 
-RUN mkdir -p $$GOPATH/bin && \
-    curl https://glide.sh/get | sh
-
-RUN glide install
-RUN CGO_ENABLED=0 GOOS=linux go build -o aws-es-proxy
+RUN CGO_ENABLED=0 && GOOS=linux && go build -o aws-es-proxy
 
 
 FROM alpine:3.7
